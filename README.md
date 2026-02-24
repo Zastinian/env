@@ -279,9 +279,67 @@ requireEnv(['DATABASE_URL', 'API_KEY', 'SECRET']);
 ```typescript
 import { getMultipleEnv, getOptionalEnv } from '@hedystia/env';
 
+// Simple usage - returns raw strings
 const [host, port, db] = getMultipleEnv(['HOST', 'PORT', 'DATABASE']);
 
+// With type parsing
+const [hostname, portNum] = getMultipleEnv([
+  { variable: 'HOST' },
+  { variable: 'PORT', type: portEnv }
+]);
+
 const optionalKey = getOptionalEnv('OPTIONAL_API_KEY');
+
+// With type parsing
+const optionalPort = getOptionalEnv({ variable: 'OPTIONAL_PORT', type: portEnv });
+```
+
+### Optional Variables
+```typescript
+import { getEnv, getOptionalEnv, portEnv } from '@hedystia/env';
+
+// Using getOptionalEnv with simple variable name
+const apiKey = getOptionalEnv('API_KEY'); // string | undefined
+
+// Using getOptionalEnv with type parsing
+const port = getOptionalEnv({ variable: 'PORT', type: portEnv }); // number | undefined
+
+// Using getEnv with optional flag
+const apiSecret = getEnv({
+  variable: 'API_SECRET',
+  type: stringEnv,
+  optional: true // returns undefined if not set, instead of throwing
+}); // string | undefined
+```
+
+### Checking Variable Existence
+```typescript
+import { hasEnv, portEnv } from '@hedystia/env';
+
+// Simple check - just existence
+if (hasEnv('OPTIONAL_KEY')) {
+  console.log('OPTIONAL_KEY exists');
+}
+
+// Check existence with type validation
+if (hasEnv({ variable: 'PORT', type: portEnv })) {
+  console.log('PORT exists and is a valid port number');
+}
+```
+
+### Requiring Multiple Variables
+```typescript
+import { requireEnv, portEnv, numberEnv } from '@hedystia/env';
+
+// Simple requirement - just check existence
+requireEnv(['DATABASE_URL', 'API_KEY']);
+
+// With type validation
+requireEnv([
+  { variable: 'PORT', type: portEnv },
+  { variable: 'WORKERS', type: numberEnv },
+  { variable: 'DATABASE_URL' }
+]);
 ```
 
 ## Error Handling
