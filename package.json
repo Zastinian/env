@@ -7,7 +7,7 @@
   "scripts": {
     "publish": "bun run types && bun run build && npm publish",
     "build": "bun build --target=node --format=cjs src/index.ts --outfile dist/index.js --minify",
-    "types": "tsc --noEmit false --emitDeclarationOnly"
+    "types": "bunx tsc --noEmit false --emitDeclarationOnly"
   },
   "author": "contact@hedystia.com",
   "license": "MIT",
