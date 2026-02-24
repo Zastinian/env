@@ -908,6 +908,41 @@ export const longitudeEnv = (rawValue: string): number => {
 
 /**
  * Main environment variable getter with type validation
+ */
+export function getEnv<T>({
+  variable,
+  type,
+  defaultValue,
+}: {
+  variable: string;
+  type: RawValueMapper<T>;
+  defaultValue: T | (() => T);
+}): T;
+export function getEnv<T>({
+  variable,
+  type,
+  optional,
+  defaultValue,
+}: {
+  variable: string;
+  type: RawValueMapper<T>;
+  optional?: false;
+  defaultValue?: T | (() => T);
+}): T;
+export function getEnv<T>({
+  variable,
+  type,
+  optional,
+  defaultValue,
+}: {
+  variable: string;
+  type: RawValueMapper<T>;
+  optional: true;
+  defaultValue?: T | (() => T);
+}): T | undefined;
+
+/**
+ * Main environment variable getter with type validation
  * @param {Object} config - Configuration object
  * @param {string} config.variable - Environment variable name
  * @param {RawValueMapper<T>} config.type - Type parser function
@@ -919,7 +954,7 @@ export const longitudeEnv = (rawValue: string): number => {
  * @returns {T} Parsed and validated environment variable value
  * @throws {Error} If variable is missing (and no default/optional) or validation fails
  */
-export const getEnv = <T>({
+export function getEnv<T>({
   variable,
   type,
   optional = false,
@@ -929,7 +964,7 @@ export const getEnv = <T>({
   type: RawValueMapper<T>;
   optional?: boolean;
   defaultValue?: T | (() => T);
-}): T | undefined => {
+}): T | undefined {
   const rawValue = env[variable];
 
   if (rawValue === undefined) {
@@ -951,7 +986,7 @@ export const getEnv = <T>({
       `Error parsing environment variable "${variable}": ${error instanceof Error ? error.message : String(error)}`,
     );
   }
-};
+}
 
 export default getEnv;
 
@@ -1030,6 +1065,16 @@ export const hasEnv = (
 
 /**
  * Gets environment variable with optional type parsing
+ */
+export function getOptionalEnv(variable: string): string | undefined;
+export function getOptionalEnv<T>(variable: string, type: RawValueMapper<T>): T | undefined;
+export function getOptionalEnv<T>(variable: {
+  variable: string;
+  type?: RawValueMapper<T>;
+}): T | undefined;
+
+/**
+ * Gets environment variable with optional type parsing
  * @param {string | {variable: string, type?: RawValueMapper<T>}} variable - Environment variable name or config object
  * @param {RawValueMapper<T>} type - Optional type parser function
  * @example
@@ -1037,10 +1082,10 @@ export const hasEnv = (
  * const port = getOptionalEnv({ variable: "PORT", type: portEnv })
  * @returns {T | undefined} Environment variable value or undefined
  */
-export const getOptionalEnv = <T = string>(
+export function getOptionalEnv<T = string>(
   variable: string | { variable: string; type?: RawValueMapper<T> },
   type?: RawValueMapper<T>,
-): T | undefined => {
+): T | undefined {
   const varName = typeof variable === "string" ? variable : variable.variable;
   const typeParser = typeof variable === "string" ? type : variable.type;
 
@@ -1061,38 +1106,80 @@ export const getOptionalEnv = <T = string>(
       `Error parsing environment variable "${varName}": ${error instanceof Error ? error.message : String(error)}`,
     );
   }
-};
+}
 
 /**
  * Gets multiple environment variables at once with optional type parsing
- * @param {Array<string | {variable: string, type?: RawValueMapper<any>}>} variables - Array of variable names or config objects
+ */
+export function getMultipleEnv<
+  T extends readonly (string | { variable: string; type?: RawValueMapper<any> })[]
+>(
+  variables: T,
+): {
+  [K in keyof T]: T[K] extends { type: RawValueMapper<infer U> } ? U : string;
+}[];
+export function getMultipleEnv<
+  T extends readonly (string | { variable: string; type?: RawValueMapper<any>; optional?: false })[]
+>(
+  variables: T,
+): {
+  [K in keyof T]: T[K] extends { type: RawValueMapper<infer U> } ? U : string;
+}[];
+export function getMultipleEnv<
+  T extends readonly (string | { variable: string; type?: RawValueMapper<any>; optional?: boolean })[]
+>(
+  variables: T,
+): {
+  [K in keyof T]: T[K] extends { type: RawValueMapper<infer U>; optional: true }
+    ? U | undefined
+    : T[K] extends { type: RawValueMapper<infer U> }
+      ? U
+      : T[K] extends { optional: true }
+        ? string | undefined
+        : string;
+}[];
+
+/**
+ * Gets multiple environment variables at once with optional type parsing
+ * @param {Array<string | {variable: string, type?: RawValueMapper<any>, optional?: boolean}>} variables - Array of variable names or config objects
  * @example
  * const [host, port] = getMultipleEnv(["HOST", "PORT"])
  * const [host, port] = getMultipleEnv([{ variable: "HOST" }, { variable: "PORT", type: portEnv }])
+ * const [host, port] = getMultipleEnv([{ variable: "HOST" }, { variable: "PORT", type: portEnv, optional: true }])
  * @returns {(any | undefined)[]} Array of environment variable values
  */
-export const getMultipleEnv = (
-  variables: Array<string | { variable: string; type?: RawValueMapper<any> }>,
-): (any | undefined)[] => {
+export function getMultipleEnv<
+  T extends readonly (string | { variable: string; type?: RawValueMapper<any>; optional?: boolean })[]
+>(
+  variables: T,
+): any[] {
   return variables.map((v) => {
-    if (typeof v === "string") {
-      return env[v];
+    const varName = typeof v === "string" ? v : v.variable;
+    const typeParser = typeof v === "string" ? undefined : v.type;
+    const optional = typeof v === "string" ? false : v.optional ?? false;
+
+    const rawValue = env[varName];
+
+    if (rawValue === undefined) {
+      if (optional) {
+        return undefined;
+      }
+      throw new Error(`Missing required environment variable "${varName}"`);
     }
 
-    const rawValue = env[v.variable];
-    if (rawValue === undefined || !v.type) {
+    if (!typeParser) {
       return rawValue;
     }
 
     try {
-      return v.type(rawValue);
+      return typeParser(rawValue);
     } catch (error) {
       throw new Error(
-        `Error parsing environment variable "${v.variable}": ${error instanceof Error ? error.message : String(error)}`,
+        `Error parsing environment variable "${varName}": ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   });
-};
+}
 
 /**
  * Checks if all required environment variables are present with optional type validation
