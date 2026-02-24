@@ -4,7 +4,7 @@ const isBun: boolean = !!globalThis.Bun;
 const isNode: boolean = !!globalThis.process?.versions?.node && !isBun;
 
 if (isNode) {
-    process.loadEnvFile();
+  process.loadEnvFile();
 }
 
 type RawValueMapper<T> = (rawValue: string) => T;
@@ -43,7 +43,7 @@ export const numberEnv = (rawValue: string): number => {
  * @throws {Error} If value cannot be parsed as a valid integer
  */
 export const intEnv = (rawValue: string): number => {
-  const parsed = parseInt(rawValue, 10);
+  const parsed = Number.parseInt(rawValue, 10);
   if (Number.isNaN(parsed)) {
     throw new Error(`Cannot parse as integer: "${rawValue}"`);
   }
@@ -59,7 +59,7 @@ export const intEnv = (rawValue: string): number => {
  * @throws {Error} If value cannot be parsed as a valid float
  */
 export const floatEnv = (rawValue: string): number => {
-  const parsed = parseFloat(rawValue);
+  const parsed = Number.parseFloat(rawValue);
   if (Number.isNaN(parsed)) {
     throw new Error(`Cannot parse as float: "${rawValue}"`);
   }
@@ -76,8 +76,8 @@ export const floatEnv = (rawValue: string): number => {
  */
 export const booleanEnv = (rawValue: string): boolean => {
   const lower = rawValue.toLowerCase().trim();
-  if (lower === "true" || lower === "1" || lower === "yes") return true;
-  if (lower === "false" || lower === "0" || lower === "no") return false;
+  if (lower === "true" || lower === "1" || lower === "yes") { return true; }
+  if (lower === "false" || lower === "0" || lower === "no") { return false; }
   throw new Error(`Cannot parse as boolean: "${rawValue}"`);
 };
 
@@ -89,12 +89,14 @@ export const booleanEnv = (rawValue: string): boolean => {
  * @returns {function} Parser function that returns validated enum value
  * @throws {Error} If value is not in the allowed enum values
  */
-export const enumEnv = <T extends string>(...values: T[]) => (rawValue: string): T => {
-  if (values.includes(rawValue as T)) {
-    return rawValue as T;
-  }
-  throw new Error(`Invalid enum value "${rawValue}". Expected one of: ${values.join(", ")}`);
-};
+export const enumEnv =
+  <T extends string>(...values: T[]) =>
+  (rawValue: string): T => {
+    if (values.includes(rawValue as T)) {
+      return rawValue as T;
+    }
+    throw new Error(`Invalid enum value "${rawValue}". Expected one of: ${values.join(", ")}`);
+  };
 
 /**
  * Parses environment variable as an array of strings
@@ -103,9 +105,14 @@ export const enumEnv = <T extends string>(...values: T[]) => (rawValue: string):
  * getEnv({ variable: "ALLOWED_ORIGINS", type: arrayEnv() })
  * @returns {function} Parser function that returns array of strings
  */
-export const arrayEnv = (separator: string = ",") => (rawValue: string): string[] => {
-  return rawValue.split(separator).map(s => s.trim()).filter(s => s.length > 0);
-};
+export const arrayEnv =
+  (separator: string = ",") =>
+  (rawValue: string): string[] => {
+    return rawValue
+      .split(separator)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+  };
 
 /**
  * Parses environment variable as an array of numbers
@@ -115,16 +122,21 @@ export const arrayEnv = (separator: string = ",") => (rawValue: string): string[
  * @returns {function} Parser function that returns array of numbers
  * @throws {Error} If any value in the array cannot be parsed as a number
  */
-export const numberArrayEnv = (separator: string = ",") => (rawValue: string): number[] => {
-  const arr = rawValue.split(separator).map(s => s.trim()).filter(s => s.length > 0);
-  return arr.map(item => {
-    const parsed = Number(item);
-    if (Number.isNaN(parsed)) {
-      throw new Error(`Invalid number in array: "${item}"`);
-    }
-    return parsed;
-  });
-};
+export const numberArrayEnv =
+  (separator: string = ",") =>
+  (rawValue: string): number[] => {
+    const arr = rawValue
+      .split(separator)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+    return arr.map((item) => {
+      const parsed = Number(item);
+      if (Number.isNaN(parsed)) {
+        throw new Error(`Invalid number in array: "${item}"`);
+      }
+      return parsed;
+    });
+  };
 
 /**
  * Parses environment variable as an array of integers
@@ -134,16 +146,21 @@ export const numberArrayEnv = (separator: string = ",") => (rawValue: string): n
  * @returns {function} Parser function that returns array of integers
  * @throws {Error} If any value in the array cannot be parsed as an integer
  */
-export const intArrayEnv = (separator: string = ",") => (rawValue: string): number[] => {
-  const arr = rawValue.split(separator).map(s => s.trim()).filter(s => s.length > 0);
-  return arr.map(item => {
-    const parsed = parseInt(item, 10);
-    if (Number.isNaN(parsed)) {
-      throw new Error(`Invalid integer in array: "${item}"`);
-    }
-    return parsed;
-  });
-};
+export const intArrayEnv =
+  (separator: string = ",") =>
+  (rawValue: string): number[] => {
+    const arr = rawValue
+      .split(separator)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+    return arr.map((item) => {
+      const parsed = Number.parseInt(item, 10);
+      if (Number.isNaN(parsed)) {
+        throw new Error(`Invalid integer in array: "${item}"`);
+      }
+      return parsed;
+    });
+  };
 
 /**
  * Parses environment variable as an array of booleans
@@ -153,15 +170,20 @@ export const intArrayEnv = (separator: string = ",") => (rawValue: string): numb
  * @returns {function} Parser function that returns array of booleans
  * @throws {Error} If any value in the array cannot be parsed as a boolean
  */
-export const booleanArrayEnv = (separator: string = ",") => (rawValue: string): boolean[] => {
-  const arr = rawValue.split(separator).map(s => s.trim()).filter(s => s.length > 0);
-  return arr.map(item => {
-    const lower = item.toLowerCase();
-    if (lower === "true" || lower === "1" || lower === "yes") return true;
-    if (lower === "false" || lower === "0" || lower === "no") return false;
-    throw new Error(`Invalid boolean in array: "${item}"`);
-  });
-};
+export const booleanArrayEnv =
+  (separator: string = ",") =>
+  (rawValue: string): boolean[] => {
+    const arr = rawValue
+      .split(separator)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+    return arr.map((item) => {
+      const lower = item.toLowerCase();
+      if (lower === "true" || lower === "1" || lower === "yes") { return true; }
+      if (lower === "false" || lower === "0" || lower === "no") { return false; }
+      throw new Error(`Invalid boolean in array: "${item}"`);
+    });
+  };
 
 /**
  * Parses environment variable as JSON
@@ -174,7 +196,7 @@ export const booleanArrayEnv = (separator: string = ",") => (rawValue: string): 
 export const jsonEnv = <T = unknown>(rawValue: string): T => {
   try {
     return JSON.parse(rawValue) as T;
-  } catch (error) {
+  } catch {
     throw new Error(`Cannot parse as JSON: "${rawValue}"`);
   }
 };
@@ -190,7 +212,7 @@ export const jsonEnv = <T = unknown>(rawValue: string): T => {
 export const urlEnv = (rawValue: string): URL => {
   try {
     return new URL(rawValue);
-  } catch (error) {
+  } catch {
     throw new Error(`Invalid URL: "${rawValue}"`);
   }
 };
@@ -220,7 +242,7 @@ export const emailEnv = (rawValue: string): string => {
  * @throws {Error} If value is not a valid port number
  */
 export const portEnv = (rawValue: string): number => {
-  const parsed = parseInt(rawValue, 10);
+  const parsed = Number.parseInt(rawValue, 10);
   if (Number.isNaN(parsed) || parsed < 0 || parsed > 65535) {
     throw new Error(`Invalid port number: "${rawValue}"`);
   }
@@ -241,7 +263,7 @@ export const ipv4Env = (rawValue: string): string => {
     throw new Error(`Invalid IPv4 address: "${rawValue}"`);
   }
   const parts = rawValue.split(".").map(Number);
-  if (parts.some(p => p > 255)) {
+  if (parts.some((p) => p > 255)) {
     throw new Error(`Invalid IPv4 address: "${rawValue}"`);
   }
   return rawValue;
@@ -256,7 +278,8 @@ export const ipv4Env = (rawValue: string): string => {
  * @throws {Error} If value is not a valid IPv6 address
  */
 export const ipv6Env = (rawValue: string): string => {
-  const ipv6Regex = /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|::([0-9a-fA-F]{1,4}:){0,6}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:)$/;
+  const ipv6Regex =
+    /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|::([0-9a-fA-F]{1,4}:){0,6}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:)$/;
   if (!ipv6Regex.test(rawValue)) {
     throw new Error(`Invalid IPv6 address: "${rawValue}"`);
   }
@@ -272,7 +295,8 @@ export const ipv6Env = (rawValue: string): string => {
  * @throws {Error} If value is not a valid hostname
  */
 export const hostnameEnv = (rawValue: string): string => {
-  const hostnameRegex = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+  const hostnameRegex =
+    /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
   if (!hostnameRegex.test(rawValue)) {
     throw new Error(`Invalid hostname: "${rawValue}"`);
   }
@@ -287,12 +311,14 @@ export const hostnameEnv = (rawValue: string): string => {
  * @returns {function} Parser function that returns validated string
  * @throws {Error} If value does not match the pattern
  */
-export const regexEnv = (pattern: RegExp) => (rawValue: string): string => {
-  if (!pattern.test(rawValue)) {
-    throw new Error(`Value "${rawValue}" does not match pattern ${pattern}`);
-  }
-  return rawValue;
-};
+export const regexEnv =
+  (pattern: RegExp) =>
+  (rawValue: string): string => {
+    if (!pattern.test(rawValue)) {
+      throw new Error(`Value "${rawValue}" does not match pattern ${pattern}`);
+    }
+    return rawValue;
+  };
 
 /**
  * Parses environment variable as a Date object
@@ -339,7 +365,7 @@ export const isoDateEnv = (rawValue: string): Date => {
  * @throws {Error} If value is not a valid timestamp
  */
 export const timestampEnv = (rawValue: string): number => {
-  const parsed = parseInt(rawValue, 10);
+  const parsed = Number.parseInt(rawValue, 10);
   if (Number.isNaN(parsed)) {
     throw new Error(`Invalid timestamp: "${rawValue}"`);
   }
@@ -433,16 +459,18 @@ export const absolutePathEnv = (rawValue: string): string => {
  * @returns {function} Parser function that returns validated number
  * @throws {Error} If value is outside the specified range
  */
-export const rangeEnv = (min: number, max: number) => (rawValue: string): number => {
-  const parsed = Number(rawValue);
-  if (Number.isNaN(parsed)) {
-    throw new Error(`Cannot parse as number: "${rawValue}"`);
-  }
-  if (parsed < min || parsed > max) {
-    throw new Error(`Value ${parsed} is out of range [${min}, ${max}]`);
-  }
-  return parsed;
-};
+export const rangeEnv =
+  (min: number, max: number) =>
+  (rawValue: string): number => {
+    const parsed = Number(rawValue);
+    if (Number.isNaN(parsed)) {
+      throw new Error(`Cannot parse as number: "${rawValue}"`);
+    }
+    if (parsed < min || parsed > max) {
+      throw new Error(`Value ${parsed} is out of range [${min}, ${max}]`);
+    }
+    return parsed;
+  };
 
 /**
  * Parses environment variable as a positive number (> 0)
@@ -500,12 +528,14 @@ export const negativeEnv = (rawValue: string): number => {
  * @returns {function} Parser function that returns validated string
  * @throws {Error} If string length is less than minimum
  */
-export const minLengthEnv = (min: number) => (rawValue: string): string => {
-  if (rawValue.length < min) {
-    throw new Error(`String length must be at least ${min}: "${rawValue}"`);
-  }
-  return rawValue;
-};
+export const minLengthEnv =
+  (min: number) =>
+  (rawValue: string): string => {
+    if (rawValue.length < min) {
+      throw new Error(`String length must be at least ${min}: "${rawValue}"`);
+    }
+    return rawValue;
+  };
 
 /**
  * Creates a parser that validates maximum string length
@@ -515,12 +545,14 @@ export const minLengthEnv = (min: number) => (rawValue: string): string => {
  * @returns {function} Parser function that returns validated string
  * @throws {Error} If string length exceeds maximum
  */
-export const maxLengthEnv = (max: number) => (rawValue: string): string => {
-  if (rawValue.length > max) {
-    throw new Error(`String length must be at most ${max}: "${rawValue}"`);
-  }
-  return rawValue;
-};
+export const maxLengthEnv =
+  (max: number) =>
+  (rawValue: string): string => {
+    if (rawValue.length > max) {
+      throw new Error(`String length must be at most ${max}: "${rawValue}"`);
+    }
+    return rawValue;
+  };
 
 /**
  * Creates a parser that validates exact string length
@@ -530,12 +562,14 @@ export const maxLengthEnv = (max: number) => (rawValue: string): string => {
  * @returns {function} Parser function that returns validated string
  * @throws {Error} If string length does not match required length
  */
-export const lengthEnv = (length: number) => (rawValue: string): string => {
-  if (rawValue.length !== length) {
-    throw new Error(`String length must be exactly ${length}: "${rawValue}"`);
-  }
-  return rawValue;
-};
+export const lengthEnv =
+  (length: number) =>
+  (rawValue: string): string => {
+    if (rawValue.length !== length) {
+      throw new Error(`String length must be exactly ${length}: "${rawValue}"`);
+    }
+    return rawValue;
+  };
 
 /**
  * Validates environment variable contains only alphabetic characters
@@ -654,7 +688,8 @@ export const jwtEnv = (rawValue: string): string => {
  * @throws {Error} If value is not a valid semantic version
  */
 export const semverEnv = (rawValue: string): string => {
-  const semverRegex = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/;
+  const semverRegex =
+    /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/;
   if (!semverRegex.test(rawValue)) {
     throw new Error(`Invalid semantic version: "${rawValue}"`);
   }
@@ -876,38 +911,44 @@ export const longitudeEnv = (rawValue: string): number => {
  * @param {Object} config - Configuration object
  * @param {string} config.variable - Environment variable name
  * @param {RawValueMapper<T>} config.type - Type parser function
+ * @param {boolean} config.optional - If true, returns undefined when variable is missing (default: false)
  * @param {T | (() => T)} config.defaultValue - Optional default value or factory function
  * @example
  * const port = getEnv({ variable: "PORT", type: portEnv, defaultValue: 3000 })
+ * const apiKey = getEnv({ variable: "API_KEY", type: stringEnv, optional: true })
  * @returns {T} Parsed and validated environment variable value
- * @throws {Error} If variable is missing (and no default) or validation fails
+ * @throws {Error} If variable is missing (and no default/optional) or validation fails
  */
 export const getEnv = <T>({
   variable,
   type,
+  optional = false,
   defaultValue,
 }: {
   variable: string;
   type: RawValueMapper<T>;
+  optional?: boolean;
   defaultValue?: T | (() => T);
-}): T => {
+}): T | undefined => {
   const rawValue = env[variable];
 
   if (rawValue === undefined) {
+    if (optional) {
+      return undefined;
+    }
+
     if (defaultValue === undefined) {
       throw new Error(`Missing environment variable "${variable}"`);
     }
 
-    return typeof defaultValue === "function"
-      ? (defaultValue as () => T)()
-      : defaultValue;
+    return typeof defaultValue === "function" ? (defaultValue as () => T)() : defaultValue;
   }
 
   try {
     return type(rawValue);
   } catch (error) {
     throw new Error(
-      `Error parsing environment variable "${variable}": ${error instanceof Error ? error.message : String(error)}`
+      `Error parsing environment variable "${variable}": ${error instanceof Error ? error.message : String(error)}`,
     );
   }
 };
@@ -957,47 +998,139 @@ export const getEnvironment = (fallback: string = "development"): string => {
 
 /**
  * Checks if a specific environment variable exists
- * @param {string} variable - Environment variable name to check
+ * @param {string | {variable: string, type?: RawValueMapper<any>}} variable - Environment variable name or config object
+ * @param {RawValueMapper<any>} type - Optional type parser function
  * @example
  * if (hasEnv("API_KEY")) { initializeAPI() }
- * @returns {boolean} True if environment variable is defined
+ * if (hasEnv({ variable: "PORT", type: portEnv })) { startServer() }
+ * @returns {boolean} True if environment variable is defined and valid (if type provided)
  */
-export const hasEnv = (variable: string): boolean => {
-  return env[variable] !== undefined;
+export const hasEnv = (
+  variable: string | { variable: string; type?: RawValueMapper<any> },
+  type?: RawValueMapper<any>,
+): boolean => {
+  const varName = typeof variable === "string" ? variable : variable.variable;
+  const typeParser = typeof variable === "string" ? type : variable.type;
+
+  if (env[varName] === undefined) {
+    return false;
+  }
+
+  if (!typeParser) {
+    return true;
+  }
+
+  try {
+    typeParser(env[varName]!);
+    return true;
+  } catch {
+    return false;
+  }
 };
 
 /**
- * Gets environment variable or returns undefined if not found
- * @param {string} variable - Environment variable name
+ * Gets environment variable with optional type parsing
+ * @param {string | {variable: string, type?: RawValueMapper<T>}} variable - Environment variable name or config object
+ * @param {RawValueMapper<T>} type - Optional type parser function
  * @example
  * const optionalKey = getOptionalEnv("OPTIONAL_KEY")
- * @returns {string | undefined} Environment variable value or undefined
+ * const port = getOptionalEnv({ variable: "PORT", type: portEnv })
+ * @returns {T | undefined} Environment variable value or undefined
  */
-export const getOptionalEnv = (variable: string): string | undefined => {
-  return env[variable];
+export const getOptionalEnv = <T = string>(
+  variable: string | { variable: string; type?: RawValueMapper<T> },
+  type?: RawValueMapper<T>,
+): T | undefined => {
+  const varName = typeof variable === "string" ? variable : variable.variable;
+  const typeParser = typeof variable === "string" ? type : variable.type;
+
+  const rawValue = env[varName];
+
+  if (rawValue === undefined) {
+    return undefined;
+  }
+
+  if (!typeParser) {
+    return rawValue as T;
+  }
+
+  try {
+    return typeParser(rawValue);
+  } catch (error) {
+    throw new Error(
+      `Error parsing environment variable "${varName}": ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
 };
 
 /**
- * Gets multiple environment variables at once
- * @param {string[]} variables - Array of environment variable names
+ * Gets multiple environment variables at once with optional type parsing
+ * @param {Array<string | {variable: string, type?: RawValueMapper<any>}>} variables - Array of variable names or config objects
  * @example
  * const [host, port] = getMultipleEnv(["HOST", "PORT"])
- * @returns {(string | undefined)[]} Array of environment variable values
+ * const [host, port] = getMultipleEnv([{ variable: "HOST" }, { variable: "PORT", type: portEnv }])
+ * @returns {(any | undefined)[]} Array of environment variable values
  */
-export const getMultipleEnv = (variables: string[]): (string | undefined)[] => {
-  return variables.map(v => env[v]);
+export const getMultipleEnv = (
+  variables: Array<string | { variable: string; type?: RawValueMapper<any> }>,
+): (any | undefined)[] => {
+  return variables.map((v) => {
+    if (typeof v === "string") {
+      return env[v];
+    }
+
+    const rawValue = env[v.variable];
+    if (rawValue === undefined || !v.type) {
+      return rawValue;
+    }
+
+    try {
+      return v.type(rawValue);
+    } catch (error) {
+      throw new Error(
+        `Error parsing environment variable "${v.variable}": ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  });
 };
 
 /**
- * Checks if all required environment variables are present
- * @param {string[]} variables - Array of required environment variable names
+ * Checks if all required environment variables are present with optional type validation
+ * @param {Array<string | {variable: string, type?: RawValueMapper<any>}>} variables - Array of variable names or config objects
  * @example
  * requireEnv(["DATABASE_URL", "API_KEY", "SECRET"])
- * @throws {Error} If any required environment variable is missing
+ * requireEnv([{ variable: "PORT", type: portEnv }, { variable: "API_KEY" }])
+ * @throws {Error} If any required environment variable is missing or invalid
  */
-export const requireEnv = (variables: string[]): void => {
-  const missing = variables.filter(v => env[v] === undefined);
+export const requireEnv = (
+  variables: Array<string | { variable: string; type?: RawValueMapper<any> }>,
+): void => {
+  const missing: string[] = [];
+  const invalid: string[] = [];
+
+  variables.forEach((v) => {
+    const varName = typeof v === "string" ? v : v.variable;
+    const typeParser = typeof v === "string" ? undefined : v.type;
+
+    if (env[varName] === undefined) {
+      missing.push(varName);
+      return;
+    }
+
+    if (typeParser) {
+      try {
+        typeParser(env[varName]!);
+      } catch {
+        invalid.push(varName);
+      }
+    }
+  });
+
   if (missing.length > 0) {
     throw new Error(`Missing required environment variables: ${missing.join(", ")}`);
+  }
+
+  if (invalid.length > 0) {
+    throw new Error(`Invalid environment variables: ${invalid.join(", ")}`);
   }
 };
